@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amste Print Media - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="agent-dashboard" style="display: none;">
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-print"></i>
+                Amste Print Media
+                <small style="display: block; font-size: 0.7rem;">Admin Panel</small>
+            </div>
+            <nav>
+                <a href="#" data-page="dashboardPage" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                    <span id="dashboardBadge" class="badge" style="display: none;"></span>
+                </a>
+                <a href="#" data-page="reviewOrdersPage">
+                    <i class="fas fa-clock"></i> Review Orders
+                    <span id="reviewBadge" class="badge" style="display: none;"></span>
+                </a>
+                <a href="#" data-page="activeOrdersPage">
+                    <i class="fas fa-print"></i> Active Orders
+                </a>
+                <a href="#" data-page="pricingPage">
+                    <i class="fas fa-tags"></i> Pricing
+                </a>
+                <a href="#" data-page="usersPage">
+                    <i class="fas fa-users"></i> Users
+                </a>
+                <a href="#" data-page="reportsPage">
+                    <i class="fas fa-chart-line"></i> Reports
+                </a>
+                <a href="#" data-page="customerMessagesPage">
+                    <i class="fas fa-envelope"></i> Customer Messages
+                    <span id="messagesBadge" class="badge" style="display: none;"></span>
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </nav>
+        </div>
+        <div class="main-area">
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="dashboard-page">
+                <div class="stats-cards" id="statsCards"></div>
+                
+                <div class="profit-analytics-container" id="profitAnalyticsContainer">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-line"></i> Profit & Loss Analytics</h2>
+                        <div class="period-selector">
+                            <button class="period-btn active" data-period="daily" onclick="changeProfitPeriod('daily')">Daily</button>
+                            <button class="period-btn" data-period="weekly" onclick="changeProfitPeriod('weekly')">Weekly</button>
+                            <button class="period-btn" data-period="monthly" onclick="changeProfitPeriod('monthly')">Monthly</button>
+                            <button class="period-btn" data-period="quarterly" onclick="changeProfitPeriod('quarterly')">Quarterly</button>
+                            <button class="period-btn" data-period="halfYearly" onclick="changeProfitPeriod('halfYearly')">Half Yearly</button>
+                            <button class="period-btn" data-period="yearly" onclick="changeProfitPeriod('yearly')">Yearly</button>
+                            <button class="btn-print" onclick="printProfitChart()">
+                                <i class="fas fa-print"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="profitChart" width="800" height="400"></canvas>
+                    </div>
+                    <div class="profit-interpretation" id="profitInterpretation"></div>
+                </div>
+                
+                <div class="orders-container">
+                    <h3>Recent Orders</h3>
+                    <div id="recentOrdersTable" class="admin-table"></div>
+                </div>
+            </div>
+
+            <div id="reviewOrdersPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>Orders Pending Review</h3>
+                    <div id="pendingReviewList"></div>
+                </div>
+            </div>
+
+            <div id="activeOrdersPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>Active Orders (Processing)</h3>
+                    <div id="activeOrdersList"></div>
+                </div>
+            </div>
+
+            <div id="pricingPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>Pricing Configuration</h3>
+                    <div id="pricingList" class="admin-table"></div>
+                </div>
+            </div>
+
+            <div id="usersPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>User Management</h3>
+                    <div id="usersTable" class="admin-table"></div>
+                </div>
+            </div>
+
+            <div id="reportsPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>Sales Reports</h3>
+                    <div class="report-filters" style="margin-bottom: 1rem;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>From Date</label>
+                                <input type="date" id="reportStartDate">
+                            </div>
+                            <div class="form-group">
+                                <label>To Date</label>
+                                <input type="date" id="reportEndDate">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="generateReport()">Generate Report</button>
+                        <button id="downloadReportBtn" class="btn-primary" style="background: #28a745; display: none;" onclick="downloadReportExcel()">Download Excel</button>
+                    </div>
+                    <div id="reportSummary" class="stats-cards" style="margin-bottom: 1rem;"></div>
+                    <div id="reportOrdersTable" class="admin-table"></div>
+                </div>
+            </div>
+
+            <div id="customerMessagesPage" style="display: none;">
+                <div class="orders-container">
+                    <h3>Customer Conversations</h3>
+                    <button class="btn-primary" onclick="showBroadcastModal()" style="margin-bottom: 1rem;">
+                        <i class="fas fa-bullhorn"></i> Broadcast Message
+                    </button>
+                    <div class="chat-layout" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div class="chat-conversations" style="flex: 1; min-width: 250px;">
+                            <h4>Conversations with Customers</h4>
+                            <div id="customerMessagesList"></div>
+                        </div>
+                        <div class="chat-area" style="flex: 2; min-width: 300px;">
+                            <div id="chatArea">
+                                <p style="text-align: center; padding: 2rem;">Select a conversation to start chatting</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="broadcastModal" class="broadcast-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Broadcast Message to Customers</h3>
+                <span class="close" onclick="closeBroadcastModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Recipients</label>
+                    <div id="userCheckboxList" class="user-checkbox-list"></div>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="broadcastMessage" rows="4" placeholder="Type your message here..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="sendBroadcast()" style="width: 100%;">Send Broadcast</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customConfirmDialog" class="confirm-dialog" style="display: none;">
+        <div class="dialog-content">
+            <p id="confirmMessage"></p>
+            <div class="dialog-buttons">
+                <button class="btn-confirm" id="confirmYesBtn">Confirm</button>
+                <button class="btn-cancel" id="confirmNoBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const API_BASE = '/api';
+        const socket = io(window.location.origin, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 10,
+            reconnectionDelay: 1000
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+        });
+        
+        socket.on('connect', () => {
+            console.log('Admin socket connected');
+        });
+    </script>
+    <script src="/agent-script.js"></script>
+</body>
+</html>
